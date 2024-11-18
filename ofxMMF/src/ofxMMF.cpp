@@ -219,10 +219,10 @@ HRESULT ofxMMF::SetSourceReader(IMFActivate * device) {
 	IMFAttributes * attributes = NULL;
 	
 
-	std::cout << "Pass 2a" << std::endl;
+	//std::cout << "Pass 2a" << std::endl;
 
 	EnterCriticalSection(&criticalSection);
-	std::cout << "Pass 2b" << std::endl;
+	//std::cout << "Pass 2b" << std::endl;
 	hr = device -> ActivateObject(__uuidof(IMFMediaSource), (void **)&source);
 	
 	//get symbolic link for the device
@@ -252,12 +252,17 @@ HRESULT ofxMMF::SetSourceReader(IMFActivate * device) {
 
 	if (SUCCEEDED(hr)) {
 		std::cout << "Cam control: \tExposure\t val:" << camControlVal << "\tflag:" << camControlFlags << std::endl;
-		camControl->Set(CameraControlProperty::CameraControl_Exposure, 0, 2);
+		camControl->Set(CameraControlProperty::CameraControl_Exposure, 0, 0x01);
 		HRESULT rMin, rMax, rStep, rDefault, rFlag;
 		camControl->GetRange(CameraControlProperty::CameraControl_Exposure, &rMin, &rMax, &rStep, &rDefault, &rFlag);
 		std::cout << "Exposure \tmin: " << rMin << " \tmax:" << rMax << std::endl;
 
-		mmfCamParameterGroup.add(exposureSetting.set("Exposure", camControlVal, rMin, rMax));	
+		camControl->Get(CameraControlProperty::CameraControl_Exposure, &camControlVal, &camControlFlags);
+		std::cout << "Current exposure: " << camControlVal << ", flag: " << camControlFlags << std::endl;
+
+		camControl->Set(CameraControlProperty::CameraControl_Exposure, -2, 0x01);
+		mmfCamParameterGroup.add(exposureSetting.set("Exposure", camControlVal, rMin, rMax));
+
 		exposureSetting.addListener(this, &ofxMMF::changeExposureSetting);
 	}
 	//White balance settings
@@ -385,11 +390,11 @@ void ofxMMF::changeExposureSetting(int &setting) {
 		HRESULT rMin, rMax, rStep, rDefault, rFlag;
 		camControl->GetRange(CameraControlProperty::CameraControl_Exposure, &rMin, &rMax, &rStep, &rDefault, &rFlag);
 
-		if ((setting > rMin && setting < rMax)) {
-			std::cout << "valstep: " << rStep << std::endl;
-			std::cout << "Set exposure" << std::endl;
+		if ((setting >= rMin && setting <= rMax)) {
+			//std::cout << "valstep: " << rStep << std::endl;
+			//std::cout << "Set exposure" << std::endl;
 			HRESULT hr = camControl->Set(CameraControlProperty::CameraControl_Exposure,(long)setting,0x02);
-			std::cout << "success" << hr << std::endl;
+			//std::cout << "success" << hr << std::endl;
 		}
 	}
 }
@@ -597,7 +602,7 @@ HRESULT ofxMMF::LogMediaType(IMFMediaType * pType) {
 
 	for (UINT32 i = 0; i < count; i++) {
 		hr = LogAttributeValueByIndex(pType, i);
-		std::cout << "__________________________________________________" << std::endl;
+		//std::cout << "__________________________________________________" << std::endl;
 		if (FAILED(hr)) {
 			break;
 		}
@@ -624,7 +629,7 @@ HRESULT ofxMMF::LogAttributeValueByIndex(IMFAttributes * pAttr, DWORD index) {
 		std::cout << "GetItemByIndex: couldnt retrieve GUIDName" << std::endl;
 	}
 
-	std::cout << ConvertWCharToString(pGuidName) << "\t:";
+	//std::cout << ConvertWCharToString(pGuidName) << "\t:";
 
 	hr = SpecialCaseAttributeValue(guid, var);
 	if (FAILED(hr)) {
@@ -634,48 +639,48 @@ HRESULT ofxMMF::LogAttributeValueByIndex(IMFAttributes * pAttr, DWORD index) {
 		switch (var.vt) {
 		case VT_UI4:
 			
-			std::cout << (long)var.ulVal;
+			//std::cout << (long)var.ulVal;
 			break;
 
 		case VT_UI8:
-			std::cout << var.uhVal.LowPart << " x " << var.uhVal.HighPart;
+			//std::cout << var.uhVal.LowPart << " x " << var.uhVal.HighPart;
 			break;
 
 		case VT_R8:
-			std::cout << var.dblVal;
+			//std::cout << var.dblVal;
 			break;
 
 		case VT_CLSID:
 			hr = GetGUIDName(*var.puuid, &pGuidValName);
 			if (SUCCEEDED(hr)) {
-				std::cout << ConvertWCharToString(pGuidValName) << "flag";
+				//std::cout << ConvertWCharToString(pGuidValName) << "flag";
 			}
 			break;
 
 		case VT_LPWSTR:
-			std::cout << ConvertWCharToString(var.pwszVal);
+			//std::cout << ConvertWCharToString(var.pwszVal);
 			break;
 
 		case VT_VECTOR | VT_UI1:
-			std::cout << "byte array! ";
+			//std::cout << "byte array! ";
 			break;
 
 		case VT_UNKNOWN:
-			std::cout << "Unknown";
+			//std::cout << "Unknown";
 			break;
 		case VT_ARRAY:
-			std::cout << "array";
+			//std::cout << "array";
 		case VT_BLOB:
-			std::cout << "blob";
+			//std::cout << "blob";
 		case VT_DECIMAL: 
-			std::cout << "dec";
+			//std::cout << "dec";
 		default:
 			//DBGMSG(L"Unexpected attribute type (vt = %d)", var.vt);
-			std::cout << "Unexpected";
+			//std::cout << "Unexpected";
 			break;
 		}
 
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
 
 
@@ -727,7 +732,7 @@ done:
 void ofxMMF::LogUINT32AsUINT64(const PROPVARIANT & var) {
 	UINT32 uHigh = 0, uLow = 0;
 	Unpack2UINT32AsUINT64(var.uhVal.QuadPart, &uHigh, &uLow);
-	std::cout << uHigh << " x " << uLow;
+	//std::cout << uHigh << " x " << uLow;
 }
 
 float ofxMMF::OffsetToFloat(const MFOffset & offset) {
